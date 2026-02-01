@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Will You Be My Valentine? 💝</title>
+  <style>
+    :root{
+      --bg1:#ffafbd; --bg2:#ffc3a0;
+      --btn:#ff6b6b; --btn-hover:#ff8787; --text:#ff4757;
+      --card-bg: rgba(255,255,255,0.85);
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;}
+    body{
+      background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:flex;align-items:center;justify-content:center;
+      color:var(--text);
+      overflow:hidden;
+    }
+    .scene{
+      width:960px; max-width:94vw; padding:36px; border-radius:18px;
+      background:var(--card-bg); box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+      position:relative; text-align:center;
+    }
+    h1{margin:0 0 8px;font-size:28px}
+    p.lead{margin:0 0 24px;color:#6b2a33}
+    .buttons{display:flex;gap:18px;justify-content:center;margin-top:18px;position:relative}
+    button{
+      padding:12px 22px;border-radius:999px;border:0;background:var(--btn);color:white;font-weight:700;
+      cursor:pointer; font-size:16px; box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+      transition: transform 150ms ease, background 120ms;
+    }
+    button:hover{transform: translateY(-3px); background:var(--btn-hover)}
+    button.secondary{background:#fff;color:var(--text);border:2px solid var(--btn);font-weight:800}
+    /* area for moving No button */
+    .btn-area{position:relative; min-height:90px; display:flex; align-items:center; justify-content:center}
+    /* floating emojis */
+    .floating{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+    .floating span{
+      position:absolute; font-size:22px; opacity:0.9; animation:floatUp linear infinite;
+    }
+    @keyframes floatUp{
+      from { transform: translateY(120%); opacity:0 }
+      50%  { opacity:0.95 }
+      to   { transform: translateY(-120%); opacity:0 }
+    }
+    /* celebration overlay */
+    .overlay{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      background: rgba(0,0,0,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity 240ms;
+    }
+    .overlay.show{opacity:1; pointer-events:auto}
+    .modal{
+      width:min(720px,92vw); background:white; padding:28px; border-radius:14px; text-align:center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    }
+    .modal h2{margin:0 0 8px;color:#b22245}
+    .hearts{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:39; overflow:hidden}
+    .heart{
+      position:absolute; font-size:28px; transform:translateY(0) scale(1); opacity:0.95;
+      animation:heartAnim linear infinite;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.15));
+    }
+    @keyframes heartAnim{
+      from{ transform: translateY(0) scale(0.8); opacity:0.9}
+      to  { transform: translateY(-110vh) scale(1.2); opacity:0.05}
+    }
+    /* responsive */
+    @media (max-width:520px){
+      .scene{ padding:20px; border-radius:12px }
+      h1{font-size:20px}
+      button{padding:10px 16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="floating" aria-hidden="true"></div>
+
+  <main class="scene" role="main" aria-labelledby="title">
+    <h1 id="title">Will you be my Valentine? 💝</h1>
+    <p class="lead">Ji Su — I made this just for you. I hope it makes you smile.</p>
+
+    <div class="btn-area" id="btnArea">
+      <div class="buttons" id="buttonRow">
+        <button id="yesBtn">Yes 💖</button>
+        <button id="noBtn" class="secondary">No 😢</button>
+      </div>
+    </div>
+
+    <p style="margin-top:18px;color:#9b2c3a;font-size:14px">(Click the buttons — it's a little surprise!)</p>
+  </main>
+
+  <!-- modal overlays -->
+  <div class="overlay" id="trickOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2>Oh no! 😅</h2>
+      <p>Trying to say "No" won't make me give up so easily. Can you try one more time... but maybe say "Yes"? 💞</p>
+      <div style="margin-top:18px">
+        <button id="overlayYes" style="background:linear-gradient(90deg,#ff6b6b,#ff8787);">Say Yes 💝</button>
+        <button id="overlayClose" class="secondary" style="margin-left:12px">I'll think about it</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="celebration" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2>Yay! 🎉 You said Yes!</h2>
+      <p>You made me the happiest person. Come get your present (and a hug!) 💋</p>
+      <div style="margin-top:18px">
+        <button id="doneBtn" style="background:linear-gradient(90deg,#ff6b6b,#ff8787);">Hooray!</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hearts" id="hearts"></div>
+
+  <audio id="music" src="https://res.cloudinary.com/dncywqfpb/video/upload/v1738399057/music_qrhjvy.mp3" preload="auto"></audio>
+
+  <script>
+    // Basic floating emojis setup
+    const floatingData = ['❤️','💖','💝','💗','💓','🧸','🐻'];
+    const floating = document.querySelector('.floating');
+    for(let i=0;i<14;i++){ 
+      const el = document.createElement('span');
+      el.textContent = floatingData[i % floatingData.length];
+      const left = Math.random()*100;
+      const delay = Math.random()*-20;
+      const dur = 12 + Math.random()*14;
+      el.style.left = left + '%';
+      el.style.top = (80 + Math.random()*40) + '%';
+      el.style.fontSize = (14 + Math.random()*34) + 'px';
+      el.style.animationDuration = dur + 's';
+      el.style.animationDelay = delay + 's';
+      floating.appendChild(el);
+    }
+
+    // Buttons & behavior
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const trickOverlay = document.getElementById('trickOverlay');
+    const celebration = document.getElementById('celebration');
+    const overlayYes = document.getElementById('overlayYes');
+    const overlayClose = document.getElementById('overlayClose');
+    const doneBtn = document.getElementById('doneBtn');
+    const music = document.getElementById('music');
+    const heartsLayer = document.getElementById('hearts');
+
+    let dodgeCount = 0;
+
+    // Make No button dodge the cursor
+    function moveNoRandom() {
+      const area = document.getElementById('btnArea');
+      const rect = area.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const padding = 8;
+      const maxX = rect.width - btnRect.width - padding;
+      const maxY = rect.height - btnRect.height - padding;
+      const x = Math.max(0, Math.random() * maxX);
+      const y = Math.max(0, Math.random() * maxY);
+
+      noBtn.style.position = 'absolute';
+      noBtn.style.left = x + 'px';
+      noBtn.style.top = y + 'px';
+    }
+
+    // When mouse enters No button, dodge
+    noBtn.addEventListener('mouseenter', (e) => {
+      dodgeCount++;
+      // first few times: quick dodge
+      moveNoRandom();
+      // after several attempts, reveal the cute overlay prompt
+      if (dodgeCount >= 7) {
+        setTimeout(() => {
+          showOverlay(trickOverlay);
+        }, 250);
+      }
+    });
+
+    // Support mobile taps: move on touchstart
+    noBtn.addEventListener('touchstart', (e) => {
+      dodgeCount++;
+      e.preventDefault();
+      moveNoRandom();
+      if (dodgeCount >= 7) {
+        setTimeout(() => {
+          showOverlay(trickOverlay);
+        }, 250);
+      }
+    }, {passive:false});
+
+    // If she ever manages to click No (rare), show playful message
+    noBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // small playful reaction
+      showOverlay(trickOverlay);
+    });
+
+    yesBtn.addEventListener('click', () => {
+      openCelebration();
+    });
+
+    overlayYes.addEventListener('click', () => {
+      closeOverlay(trickOverlay);
+      // small delay and then show celebration
+      setTimeout(openCelebration, 350);
+    });
+
+    overlayClose.addEventListener('click', () => {
+      closeOverlay(trickOverlay);
+    });
+
+    doneBtn.addEventListener('click', () => {
+      closeOverlay(celebration);
+    });
+
+    function showOverlay(el) {
+      el.classList.add('show');
+      el.setAttribute('aria-hidden','false');
+    }
+    function closeOverlay(el) {
+      el.classList.remove('show');
+      el.setAttribute('aria-hidden','true');
+    }
+
+    // Celebration: hearts + music
+    function openCelebration() {
+      spawnHearts(24);
+      showOverlay(celebration);
+      // Play music if the user hasn't blocked it — try to play on user gesture
+      try { music.currentTime = 0; music.volume = 0.5; music.play().catch(()=>{}); } catch(e){}
+    }
+
+    function spawnHearts(n){
+      const colors = ['#ff5b7f','#ff9aa2','#ffb3c6','#ffd1d6','#ff6b6b'];
+      for(let i=0;i<n;i++){
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = '💝';
+        const left = Math.random()*100;
+        const size = 18 + Math.random()*36;
+        const dur = 4 + Math.random()*4;
+        h.style.left = left + '%';
+        h.style.fontSize = size + 'px';
+        h.style.animationDuration = dur + 's';
+        h.style.animationDelay = (Math.random()*0.6) + 's';
+        heartsLayer.appendChild(h);
+        // remove after animation
+        setTimeout(()=> { h.remove(); }, (dur+0.6)*1000);
+      }
+    }
+
+    // seed: random initial position of no button so it's not exactly centered
+    moveNoRandom();
+
+    // Accessibility: allow keyboard to select and press yes/no
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'y' || e.key === 'Y') openCelebration();
+      if (e.key === 'n' || e.key === 'N') showOverlay(trickOverlay);
+      if (e.key === 'Escape'){
+        closeOverlay(trickOverlay);
+        closeOverlay(celebration);
+      }
+    });
+
+    // Make sure layout updates on resize so no button stays in view
+    window.addEventListener('resize', () => { setTimeout(moveNoRandom, 100); });
+
+  </script>
+</body>
+</html>
