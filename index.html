@@ -107,6 +107,17 @@
       <h2>Yay! 🎉 You said Yes!</h2>
       <p>You made me the happiest person. Come get your present (and a hug!) 💋</p>
       <div style="margin-top:18px">
+        <!-- Spotify embed for the chosen track -->
+        <iframe
+          src="https://open.spotify.com/embed/track/4KZPQEj1xCByZoDD6ulCmO"
+          width="300"
+          height="80"
+          frameborder="0"
+          allowtransparency="true"
+          allow="encrypted-media">
+        </iframe>
+      </div>
+      <div style="margin-top:18px">
         <button id="doneBtn" style="background:linear-gradient(90deg,#ff6b6b,#ff8787);">Hooray!</button>
       </div>
     </div>
@@ -114,13 +125,11 @@
 
   <div class="hearts" id="hearts"></div>
 
-  <audio id="music" src="https://res.cloudinary.com/dncywqfpb/video/upload/v1738399057/music_qrhjvy.mp3" preload="auto"></audio>
-
   <script>
     // Basic floating emojis setup
     const floatingData = ['❤️','💖','💝','💗','💓','🧸','🐻'];
     const floating = document.querySelector('.floating');
-    for(let i=0;i<14;i++){ 
+    for(let i=0;i<14;i++){  
       const el = document.createElement('span');
       el.textContent = floatingData[i % floatingData.length];
       const left = Math.random()*100;
@@ -142,7 +151,6 @@
     const overlayYes = document.getElementById('overlayYes');
     const overlayClose = document.getElementById('overlayClose');
     const doneBtn = document.getElementById('doneBtn');
-    const music = document.getElementById('music');
     const heartsLayer = document.getElementById('hearts');
 
     let dodgeCount = 0;
@@ -223,12 +231,10 @@
       el.setAttribute('aria-hidden','true');
     }
 
-    // Celebration: hearts + music
+    // Celebration: hearts (Spotify embed is shown in the modal)
     function openCelebration() {
       spawnHearts(24);
       showOverlay(celebration);
-      // Play music if the user hasn't blocked it — try to play on user gesture
-      try { music.currentTime = 0; music.volume = 0.5; music.play().catch(()=>{}); } catch(e){}
     }
 
     function spawnHearts(n){
